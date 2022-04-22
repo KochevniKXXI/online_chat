@@ -75,7 +75,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                ru.nomad.online_chat.online_chat/ru.nomad.online_chat.online_chat.ChatApplication
+                                ru.nomad.online_chat.online_chat/ru.nomad.online_chat.client.ChatApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

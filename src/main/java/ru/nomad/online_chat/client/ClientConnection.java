@@ -9,24 +9,33 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ClientConnection implements ServerConstant, ServerAPI {
-    Socket socket;
-    DataOutputStream out;
-    DataInputStream in;
-    private boolean isAuthorized = false;
+    private Socket socket;
+    private DataOutputStream out;
+    private DataInputStream in;
+    private boolean isAuthorized;
+    private String nick;
+    private Thread thread;
 
-    public void init(ChatWindowController chatWindowController) {
+    public void start(ChatWindowController chatWindowController) {
         try {
+            setAuthorized(false);
             this.socket = new Socket(SERVER_URL, PORT);
             this.out = new DataOutputStream(socket.getOutputStream());
             this.in = new DataInputStream(socket.getInputStream());
-            new Thread(() -> {
+            thread = new Thread(() -> {
                 try {
                     while (true) {
                         String message = in.readUTF();
+                        if (message.equalsIgnoreCase(CLOSE_CONNECTION)) {
+                            disconnect();
+                            break;
+                        }
                         if (message.startsWith(AUTH_SUCCESSFUL)) {
                             setAuthorized(true);
+                            this.nick = message.split(" ")[1];
                             chatWindowController.switchWindows();
                             break;
                         }
@@ -34,14 +43,32 @@ public class ClientConnection implements ServerConstant, ServerAPI {
                     }
                     while (true) {
                         String message = in.readUTF();
-                        if (message.equalsIgnoreCase(CLOSE_CONNECTION)) break;
-                        chatWindowController.showMessage(message);
+                        if (message.startsWith(SYSTEM_SYMBOL)) {
+                            if (message.equalsIgnoreCase(CLOSE_CONNECTION)) break;
+                            if (message.startsWith(USERS_LIST)) {
+                                String[] users = message.split(" ");
+                                Arrays.sort(users);
+                                chatWindowController.showUsersList(users);
+                            }
+                        } else {
+                            chatWindowController.showMessage(message);
+                        }
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    setAuthorized(false);
+                    if (!socket.isClosed()) {
+                        disconnect();
+                    }
+                    this.nick = "undefined";
                 }
-            }).start();
+            });
+//            thread.setDaemon(true);
+            thread.start();
         } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.NONE, "Failed to connect to the server!", ButtonType.OK);
+            alert.showAndWait();
             throw new RuntimeException(e);
         }
     }
@@ -72,10 +99,34 @@ public class ClientConnection implements ServerConstant, ServerAPI {
         isAuthorized = authorized;
     }
 
+    public String getNick() {
+        return nick;
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public Thread getThread() {
+        return thread;
+    }
+
     public void disconnect() {
         try {
-            out.writeUTF(CLOSE_CONNECTION);
+            in.close();
+            System.out.println("in.close");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            out.close();
+            System.out.println("out.close");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
             socket.close();
+            System.out.println("socket.close");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

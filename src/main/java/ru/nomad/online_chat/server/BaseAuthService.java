@@ -26,12 +26,7 @@ public class BaseAuthService implements AuthService {
 
     @Override
     public void start() {
-
-    }
-
-    @Override
-    public void stop() {
-
+        System.out.println("Authentication service started.");
     }
 
     @Override
@@ -40,5 +35,10 @@ public class BaseAuthService implements AuthService {
             if (entry.login.equals(login) && entry.password.equals(password)) return entry.nick;
         }
         return null;
+    }
+
+    @Override
+    public void stop() {
+        System.out.println("Authentication service stopped.");
     }
 }

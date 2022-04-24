@@ -1,5 +1,6 @@
 package ru.nomad.online_chat.server;
 
+import ru.nomad.online_chat.ServerAPI;
 import ru.nomad.online_chat.ServerConstant;
 
 import java.io.IOException;
@@ -7,48 +8,69 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
 
-public class Server implements ServerConstant {
+public class Server implements ServerConstant, ServerAPI {
     private Vector<ClientHandler> clients;
     private AuthService authService;
 
     public Server() {
-        Socket socket;
-        clients = new Vector<>();
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+        try (ServerSocket server = new ServerSocket(PORT)) {
             authService = new BaseAuthService();
             authService.start(); // placeholder
-            System.out.println("Server is up and running! Awaiting for connections...");
+            clients = new Vector<>();
+            System.out.println("Server is up and running!");
             while (true) {
-                socket = serverSocket.accept();
-                clients.add(new ClientHandler(this, socket));
+                System.out.println("Awaiting for connection...");
+                Socket socket = server.accept();
                 System.out.println("Client has connected!");
+                new ClientHandler(this, socket);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("Server error!");
+        } finally {
+            if (authService != null) authService.stop();
         }
     }
 
-    public void broadcast(String message) {
+    public synchronized void broadcastMessage(String message) {
         for (ClientHandler client : clients) {
             client.sendMessage(message);
         }
     }
 
-    public void broadcast(String nick1, String nick2, String message) {
+    public synchronized void broadcastMassage(ClientHandler from, String to, String message) {
         for (ClientHandler client : clients) {
-            if (client.getNick().equals(nick1) || client.getNick().equals(nick2)) client.sendMessage(message);
+            if (client.getNick().equals(to)) {
+                client.sendMessage("from " + from.getNick() + ": " + message);
+                from.sendMessage("to " + to + " : " + message);
+                return;
+            }
         }
+        from.sendMessage("User " + to +" not found");
     }
 
-    public void unSubscribeMe(ClientHandler clientHandler) {
+    public synchronized void broadcastUsersList() {
+        StringBuilder sb = new StringBuilder(USERS_LIST);
+        for (ClientHandler client : clients) {
+            sb.append(" ").append(client.getNick());
+        }
+        broadcastMessage(sb.toString());
+    }
+
+    public synchronized void subscribeClient(ClientHandler clientHandler) {
+        clients.add(clientHandler);
+        broadcastUsersList();
+    }
+
+    public synchronized void unsubscribeClient(ClientHandler clientHandler) {
         clients.remove(clientHandler);
+        broadcastUsersList();
     }
 
     public AuthService getAuthService() {
         return authService;
     }
 
-    public boolean isNickBusy(String nick) {
+    public synchronized boolean isNickBusy(String nick) {
         for (ClientHandler client : clients) {
             if (client.getNick().equals(nick)) return true;
         }

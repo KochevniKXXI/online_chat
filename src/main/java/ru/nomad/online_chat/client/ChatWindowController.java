@@ -3,11 +3,12 @@ package ru.nomad.online_chat.client;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -26,11 +27,13 @@ public class ChatWindowController implements Initializable {
     HBox authorisation;
     @FXML
     HBox sendMessages;
+    @FXML
+    TextArea usersList;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         client = new ClientConnection();
-        client.init(this);
+        client.start(this);
     }
 
     public void sendMessage(ActionEvent actionEvent) {
@@ -46,70 +49,29 @@ public class ChatWindowController implements Initializable {
     }
 
     public void auth(ActionEvent actionEvent) {
+        if (client.getSocket() == null || client.getSocket().isClosed()) {
+            client.start(this);
+        }
         client.auth(loginField.getText(), passwordField.getText());
-        loginField.setText("");
-        passwordField.setText("");
+        loginField.clear();
+        passwordField.clear();
     }
 
     public void switchWindows() {
         authorisation.setVisible(!client.isAuthorized());
         sendMessages.setVisible(client.isAuthorized());
+        usersList.setVisible(client.isAuthorized());
+//        ((Stage) authorisation.getScene().getWindow()).setTitle(client.getNick());
     }
 
-    public ClientConnection getConnection() {
+    public void showUsersList(String[] users) {
+        usersList.setText("");
+        for (int i = 1; i < users.length; i++) {
+            usersList.appendText(users[i] + "\n");
+        }
+    }
+
+    public ClientConnection getClient() {
         return client;
     }
-
-    /*public void openConnection() throws IOException {
-        String SERVER_ADDRESS = "localhost";
-        int SERVER_PORT = 8189;
-        socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
-        thread = new Thread(() -> {
-            try {
-                while (true) {
-                    String strFromServer = in.readUTF();
-                    if (strFromServer.equalsIgnoreCase("/end")) {
-                        closeConnection();
-                        break;
-                    }
-                    this.receiveMessage(strFromServer);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        thread.start();
-    }
-
-    public void closeConnection() {
-        try {
-            in.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            socket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public DataOutputStream getOut() {
-        return out;
-    }
-
-    public Thread getThread() {
-        return thread;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }*/
 }

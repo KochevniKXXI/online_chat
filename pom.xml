@@ -52,6 +52,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.36.0.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -75,7 +81,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                ru.nomad.online_chat.online_chat/ru.nomad.online_chat.client.ChatApplication
+                                ru.nomad.online_chat.online_chat/ru.nomad.online_chat.client.ChatStart
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

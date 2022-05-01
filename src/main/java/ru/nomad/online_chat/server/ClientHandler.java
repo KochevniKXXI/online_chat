@@ -6,6 +6,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class ClientHandler implements ServerAPI {
     private Server server;
@@ -26,11 +28,9 @@ public class ClientHandler implements ServerAPI {
                     authentication();
                     readMessage();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    System.out.println("Closing without authentication");
                 } finally {
-                    if (!socket.isClosed()) {
-                        disconnect();
-                    }
+                    disconnect();
                 }
             }).start();
         } catch (IOException e) {
@@ -42,20 +42,18 @@ public class ClientHandler implements ServerAPI {
         while (true) {
             socket.setSoTimeout(120000);
             String message = in.readUTF();
-            if (message.equalsIgnoreCase(CLOSE_CONNECTION)) {
-                disconnect();
-                break;
-            }
+            if (message.equalsIgnoreCase(CLOSE_CONNECTION)) throw new IOException();
             if (message.startsWith(AUTH)) {
                 String[] elements = message.split(" ");
-                String nick = server.getAuthService().getNickByLoginPassword(elements[1], elements[2]);
+                String nick = null;
+                nick = server.getAuthService().getNickByLoginPassword(elements[1], elements[2]);
                 if (nick != null) {
                     if (!server.isNickBusy(nick)) {
                         sendMessage(AUTH_SUCCESSFUL + " " + nick);
                         this.nick = nick;
                         server.broadcastMessage(this.nick + " has entered the chat room.");
                         server.subscribeClient(this);
-                        break;
+                        return;
                     } else sendMessage("This account is already in use!");
                 } else sendMessage("Wrong login/password!");
             } else sendMessage("You should authorize first!");
@@ -72,11 +70,24 @@ public class ClientHandler implements ServerAPI {
                     String nameTo = message.split(" ")[1];
                     String privateMessage = message.substring(nameTo.length() + 4);
                     server.broadcastMassage(this, nameTo, privateMessage);
+                } else if (message.startsWith(CHANGE_NICKNAME)) {
+                    Statement statement = ((BaseAuthService) server.getAuthService()).getStatement();
+                    String nick = message.split(" ")[1];
+                    try {
+                        if (!server.isNickBusy(nick)) { // isNickBusyDataBase
+                            statement.executeUpdate("UPDATE authentication SET nickname='" + nick + "' WHERE nickname='" + this.nick + "'");
+                            sendMessage(CHANGE_NICKNAME_SUCCESSFUL + " " + nick);
+                            server.broadcastMessage(this.nick + " changed nick to " + nick);
+                            this.nick = nick;
+                            server.broadcastUsersList();
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     sendMessage("Command doesn't exist!");
                 }
             } else {
-                System.out.println("from " + this.nick + ": " + message);
                 server.broadcastMessage(this.nick + ": " + message);
             }
         }
@@ -98,23 +109,20 @@ public class ClientHandler implements ServerAPI {
     public void disconnect() {
         sendMessage("You have been disconnect.");
         server.unsubscribeClient(this);
-        server.broadcastMessage(this.nick + " left the chat.");
+        if (!this.nick.equals("undefined")) server.broadcastMessage(this.nick + " left the chat.");
         sendMessage(CLOSE_CONNECTION);
         try {
             in.close();
-            System.out.println("in.close");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         try {
             out.close();
-            System.out.println("out.close");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         try {
             socket.close();
-            System.out.println("socket.close");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

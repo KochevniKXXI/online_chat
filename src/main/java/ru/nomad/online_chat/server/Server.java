@@ -6,6 +6,7 @@ import ru.nomad.online_chat.ServerConstant;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.Vector;
 
 public class Server implements ServerConstant, ServerAPI {
@@ -15,7 +16,7 @@ public class Server implements ServerConstant, ServerAPI {
     public Server() {
         try (ServerSocket server = new ServerSocket(PORT)) {
             authService = new BaseAuthService();
-            authService.start(); // placeholder
+            authService.start();
             clients = new Vector<>();
             System.out.println("Server is up and running!");
             while (true) {
@@ -26,6 +27,10 @@ public class Server implements ServerConstant, ServerAPI {
             }
         } catch (IOException e) {
             System.out.println("Server error!");
+        } catch (ClassNotFoundException e) {
+            System.out.println("JDBC not found!");
+        } catch (SQLException e) {
+            System.out.println("Database not connect!");
         } finally {
             if (authService != null) authService.stop();
         }

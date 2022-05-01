@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="150.0" prefWidth="250.0" spacing="10.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.nomad.online_chat.client.EditNickController">
+   <children>
+      <Label text="Enter your new nickname:" />
+      <TextField fx:id="nickField" maxWidth="-Infinity" prefWidth="150.0" onAction="#editNickname" />
+      <HBox alignment="CENTER" prefHeight="27.0" prefWidth="250.0" spacing="10.0">
+         <children>
+            <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="55.0" text="OK" onAction="#editNickname" />
+            <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="55.0" text="Cancel" onAction="#cancel" />
+         </children>
+         <VBox.margin>
+            <Insets />
+         </VBox.margin>
+      </HBox>
+   </children>
+</VBox>

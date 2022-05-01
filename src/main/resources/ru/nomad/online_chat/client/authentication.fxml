@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="250.0" prefWidth="250.0" spacing="10.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.nomad.online_chat.client.AuthenticationController">
+   <Label fx:id="systemMessage" textFill="RED" />
+    <TextField fx:id="loginField" promptText="Nickname/E-mail" onAction="#auth" />
+    <PasswordField fx:id="passwordField" promptText="Password" onAction="#auth" />
+    <Button focusTraversable="false" text="Login" onAction="#auth" />
+   <padding>
+      <Insets left="25.0" right="25.0" />
+   </padding>
+</VBox>

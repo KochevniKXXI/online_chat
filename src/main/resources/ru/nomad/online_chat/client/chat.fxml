@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="400.0" prefWidth="400.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.nomad.online_chat.client.ChatController">
+    <top>
+        <MenuBar>
+            <Menu text="Редактировать">
+                <MenuItem text="Никнейм" onAction="#editNickname" />
+            </Menu>
+        </MenuBar>
+    </top>
+    <center>
+       <TextArea fx:id="correspondenceArea" editable="false" focusTraversable="false" wrapText="true" BorderPane.alignment="CENTER" />
+   </center>
+   <bottom>
+       <HBox BorderPane.alignment="CENTER">
+           <TextField fx:id="messageField" onAction="#sendMessage" promptText="Enter your message..." HBox.hgrow="ALWAYS" />
+           <Button focusTraversable="false" onAction="#sendMessage" prefWidth="100.0" text="Send" />
+       </HBox>
+   </bottom>
+   <right>
+       <ListView fx:id="usersList" prefHeight="1" prefWidth="100" BorderPane.alignment="CENTER" />
+   </right>
+</BorderPane>

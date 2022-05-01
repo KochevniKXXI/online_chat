@@ -7,4 +7,6 @@ public interface ServerAPI {
     String AUTH_SUCCESSFUL = "/authok";
     String PRIVATE_MESSAGE = "/w";
     String USERS_LIST = "/userslist";
+    String CHANGE_NICKNAME = "/cnick";
+    String CHANGE_NICKNAME_SUCCESSFUL = "/cnickok";
 }

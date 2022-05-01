@@ -1,44 +1,51 @@
 package ru.nomad.online_chat.server;
 
-import java.util.ArrayList;
+import java.sql.*;
 
 public class BaseAuthService implements AuthService {
-    private class Entry {
-        private String login;
-        private String password;
-        private String nick;
-
-        public Entry(String login, String password, String nick) {
-            this.login = login;
-            this.password = password;
-            this.nick = nick;
-        }
-    }
-
-    private ArrayList<Entry> entries;
-
-    public BaseAuthService() {
-        this.entries = new ArrayList<>();
-        entries.add(new Entry("login1", "pass1", "KochevniKXXI"));
-        entries.add(new Entry("login2", "pass2", "Thirteen"));
-        entries.add(new Entry("login3", "pass3", "BV"));
-    }
+    private Connection connection;
+    private Statement statement;
 
     @Override
-    public void start() {
+    public void start() throws ClassNotFoundException, SQLException {
+//        Class.forName("org.sqlite.JDBC");
+        connection = DriverManager.getConnection("jdbc:sqlite:users.db");
+        statement = connection.createStatement();
         System.out.println("Authentication service started.");
+
     }
 
     @Override
     public String getNickByLoginPassword(String login, String password) {
-        for (Entry entry : entries) {
-            if (entry.login.equals(login) && entry.password.equals(password)) return entry.nick;
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT nickname FROM authentication WHERE login = '" + login + "' AND password = '" + password + "'");
+            if (resultSet.next()) return resultSet.getString("nickname");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return null;
     }
 
     @Override
     public void stop() {
-        System.out.println("Authentication service stopped.");
+        try {
+            if (statement != null) {
+                statement.close();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+            System.out.println("Authentication service stopped.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Statement getStatement() {
+        return statement;
     }
 }

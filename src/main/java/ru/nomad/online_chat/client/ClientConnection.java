@@ -32,6 +32,9 @@ public class ClientConnection implements ServerConstant, ServerAPI {
                             disconnect();
                             return;
                         }
+                        if (message.equals(SERVER_STOP)) {
+                            sendMessage(CLOSE_CONNECTION);
+                        }
                         if (message.startsWith(AUTH_SUCCESSFUL)) {
                             setAuthorized(true);
                             this.nick = message.split(" ")[1];
@@ -61,6 +64,9 @@ public class ClientConnection implements ServerConstant, ServerAPI {
                         if (message.equalsIgnoreCase(CLOSE_CONNECTION)) {
                             controller.saveHistory();
                             break;
+                        }
+                        if (message.equals(SERVER_STOP)) {
+                            sendMessage(CLOSE_CONNECTION);
                         }
                         if (message.startsWith(CHANGE_NICKNAME_SUCCESSFUL)) {
                             this.nick = message.split(" ")[1];

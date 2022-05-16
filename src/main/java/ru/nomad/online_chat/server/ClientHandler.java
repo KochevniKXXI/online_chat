@@ -10,10 +10,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class ClientHandler implements ServerAPI {
-    private Server server;
-    private Socket socket;
-    private DataInputStream in;
-    private DataOutputStream out;
+    private final Server server;
+    private final Socket socket;
+    private final DataInputStream in;
+    private final DataOutputStream out;
     private String nick;
 
     public ClientHandler(Server server, Socket socket) {
@@ -23,7 +23,7 @@ public class ClientHandler implements ServerAPI {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
             this.nick = "undefined";
-            new Thread(() -> {
+            server.getPoolConnection().execute(() -> {
                 try {
                     authentication();
                     readMessage();
@@ -32,7 +32,7 @@ public class ClientHandler implements ServerAPI {
                 } finally {
                     disconnect();
                 }
-            }).start();
+            });
         } catch (IOException e) {
             throw new RuntimeException("Problems when creating a client handler!");
         }
@@ -45,10 +45,10 @@ public class ClientHandler implements ServerAPI {
             if (message.equalsIgnoreCase(CLOSE_CONNECTION)) throw new IOException();
             if (message.startsWith(AUTH)) {
                 String[] elements = message.split(" ");
-                String nick = null;
+                String nick;
                 nick = server.getAuthService().getNickByLoginPassword(elements[1], elements[2]);
                 if (nick != null) {
-                    if (!server.isNickBusy(nick)) {
+                    if (server.isNickBusy(nick)) {
                         sendMessage(AUTH_SUCCESSFUL + " " + nick);
                         this.nick = nick;
                         server.broadcastMessage(this.nick + " has entered the chat room.");
@@ -74,7 +74,7 @@ public class ClientHandler implements ServerAPI {
                     Statement statement = ((BaseAuthService) server.getAuthService()).getStatement();
                     String nick = message.split(" ")[1];
                     try {
-                        if (!server.isNickBusy(nick)) { // isNickBusyDataBase
+                        if (server.isNickBusy(nick)) { // isNickBusyDataBase
                             statement.executeUpdate("UPDATE authentication SET nickname='" + nick + "' WHERE nickname='" + this.nick + "'");
                             sendMessage(CHANGE_NICKNAME_SUCCESSFUL + " " + nick);
                             server.broadcastMessage(this.nick + " changed nick to " + nick);

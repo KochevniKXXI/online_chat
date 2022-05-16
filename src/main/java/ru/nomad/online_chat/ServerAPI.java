@@ -9,4 +9,5 @@ public interface ServerAPI {
     String USERS_LIST = "/userslist";
     String CHANGE_NICKNAME = "/cnick";
     String CHANGE_NICKNAME_SUCCESSFUL = "/cnickok";
+    String SERVER_STOP = "/stopserv";
 }

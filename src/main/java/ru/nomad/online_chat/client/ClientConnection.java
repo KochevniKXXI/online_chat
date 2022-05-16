@@ -6,9 +6,7 @@ import javafx.scene.control.ButtonType;
 import ru.nomad.online_chat.ServerAPI;
 import ru.nomad.online_chat.ServerConstant;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
 
@@ -60,12 +58,13 @@ public class ClientConnection implements ServerConstant, ServerAPI {
                 while (true) {
                     String message = in.readUTF();
                     if (message.startsWith(SYSTEM_SYMBOL)) {
-                        if (message.equalsIgnoreCase(CLOSE_CONNECTION)) break;
+                        if (message.equalsIgnoreCase(CLOSE_CONNECTION)) {
+                            controller.saveHistory();
+                            break;
+                        }
                         if (message.startsWith(CHANGE_NICKNAME_SUCCESSFUL)) {
                             this.nick = message.split(" ")[1];
-                            Platform.runLater(() -> {
-                                controller.getStage().setTitle("ON-Chat [" + nick + "]");
-                            });
+                            Platform.runLater(() -> controller.getStage().setTitle("ON-Chat [" + nick + "]"));
                         }
                         if (message.startsWith(USERS_LIST)) {
                             String[] users = message.substring(USERS_LIST.length() + 1).split(" ");

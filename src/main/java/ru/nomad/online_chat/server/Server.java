@@ -1,5 +1,7 @@
 package ru.nomad.online_chat.server;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import ru.nomad.online_chat.ServerAPI;
 import ru.nomad.online_chat.ServerConstant;
 
@@ -13,11 +15,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server implements ServerConstant, ServerAPI {
-    private volatile Vector<ClientHandler> clients;
+    private Vector<ClientHandler> clients;
     private AuthService authService;
     private ExecutorService poolConnection;
     private ServerSocket server;
     private Scanner scanner;
+    private static final Logger LOGGER = LogManager.getLogger(Server.class);
+    private boolean isRun;
 
     public Server() {
         try {
@@ -26,24 +30,25 @@ public class Server implements ServerConstant, ServerAPI {
             authService.start();
             clients = new Vector<>();
             poolConnection = Executors.newFixedThreadPool(3);
-            System.out.println("Server is up and running!");
+            LOGGER.info("Server is up and running.");
+            isRun = true;
             new Thread(() -> {
                 scanner = new Scanner(System.in);
                 while (!scanner.nextLine().equals("stop"));
                 stop();
             }).start();
             while (true) {
-                System.out.println("Awaiting for connection...");
                 Socket socket = server.accept();
-                System.out.println("Client has connected!");
+                LOGGER.info("Client has connected.");
                 new ClientHandler(this, socket);
             }
         } catch (IOException e) {
-            System.out.println("Server error!");
+            if (isRun) LOGGER.error("Server error!");
+            else LOGGER.info("Server stopped.");
         } catch (ClassNotFoundException e) {
-            System.out.println("JDBC not found!");
+            LOGGER.warn("JDBC not found!");
         } catch (SQLException e) {
-            System.out.println("Database not connect!");
+            LOGGER.error("Database not connect!");
         } finally {
             if (authService != null) authService.stop();
         }
@@ -100,6 +105,7 @@ public class Server implements ServerConstant, ServerAPI {
     }
 
     public void stop() {
+        isRun = false;
         scanner.close();
         for (ClientHandler client : clients) {
             client.sendMessage(SERVER_STOP);
@@ -110,6 +116,5 @@ public class Server implements ServerConstant, ServerAPI {
             throw new RuntimeException(e);
         }
         poolConnection.shutdown();
-        System.out.println("Server stopped!");
     }
 }
